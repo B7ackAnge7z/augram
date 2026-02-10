@@ -5,18 +5,14 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       vars:
-        XCODE_WORKSPACE: "AyuGram.xcworkspace"
+        XCODE_PROJECT: "AyuGram.xcodeproj"
         XCODE_SCHEME: "AyuGram"
       xcode: latest
-      cocoapods: default
     scripts:
-      - name: Install CocoaPods dependencies
-        script: |
-          pod install
       - name: Build ipa for distribution
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
