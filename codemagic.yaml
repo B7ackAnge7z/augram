@@ -3,42 +3,28 @@ workflows:
     name: iOS Workflow
     max_build_duration: 60
     instance_type: mac_mini_m1
-    integrations:
-      app_store_connect: codemagic
     environment:
-      ios_signing:
-        distribution_type: development
-        bundle_identifier: com.ayugram.ios
       vars:
         XCODE_PROJECT: "AyuGram.xcodeproj"
         XCODE_SCHEME: "AyuGram"
-        BUNDLE_ID: "com.ayugram.ios"
       xcode: latest
     scripts:
-      - name: Set up code signing
+      - name: Build iOS app (without code signing)
         script: |
-          # Автоматическая настройка подписи
-          xcode-project use-profiles
-      - name: Build for iOS device
-        script: |
-          # Сборка для iOS устройства
+          # Сборка только для симулятора (не требует подписи)
           xcodebuild -project "$XCODE_PROJECT" \
             -scheme "$XCODE_SCHEME" \
-            -sdk iphoneos \
+            -sdk iphonesimulator \
             -configuration Debug \
-            -destination generic/platform=iOS \
-            CODE_SIGN_STYLE=Automatic \
-            DEVELOPMENT_TEAM="" \
-            CODE_SIGN_IDENTITY="Apple Development" \
+            -derivedDataPath build \
             clean build \
-            | xcpretty && exit ${PIPESTATUS[0]}
-      - name: Package IPA
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM=""
+      - name: Find built app
         script: |
-          # Создание IPA файла
-          xcode-project build-ipa \
-            --project "$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME"
+          find build -name "*.app" -type d
     artifacts:
-      - build/ios/ipa/*.ipa
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.ipa
+      - build/**/*.app
