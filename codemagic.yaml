@@ -3,24 +3,42 @@ workflows:
     name: iOS Workflow
     max_build_duration: 60
     instance_type: mac_mini_m1
+    integrations:
+      app_store_connect: codemagic
     environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.ayugram.ios
       vars:
         XCODE_PROJECT: "AyuGram.xcodeproj"
         XCODE_SCHEME: "AyuGram"
+        BUNDLE_ID: "com.ayugram.ios"
       xcode: latest
     scripts:
-      - name: Build ipa for distribution
+      - name: Set up code signing
         script: |
+          # Автоматическая настройка подписи
+          xcode-project use-profiles
+      - name: Build for iOS device
+        script: |
+          # Сборка для iOS устройства
+          xcodebuild -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk iphoneos \
+            -configuration Debug \
+            -destination generic/platform=iOS \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_IDENTITY="Apple Development" \
+            clean build \
+            | xcpretty && exit ${PIPESTATUS[0]}
+      - name: Package IPA
+        script: |
+          # Создание IPA файла
           xcode-project build-ipa \
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-    publishing:
-      email:
-        recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.ipa
