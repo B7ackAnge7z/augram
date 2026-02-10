@@ -4,9 +4,6 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
-      ios_signing:
-        distribution_type: development
-        bundle_identifier: com.ayugram.ios
       vars:
         XCODE_WORKSPACE: "AyuGram.xcworkspace"
         XCODE_SCHEME: "AyuGram"
